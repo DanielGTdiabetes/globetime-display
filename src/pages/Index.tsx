@@ -1,11 +1,40 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from 'react';
+import WorldMap from '@/components/WorldMap';
+import RotatingCard from '@/components/RotatingCard';
+import MapboxTokenInput from '@/components/MapboxTokenInput';
 
 const Index = () => {
+  const [mapboxToken, setMapboxToken] = useState<string>('');
+  const [showTokenInput, setShowTokenInput] = useState(false);
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('mapbox_token');
+    if (savedToken) {
+      setMapboxToken(savedToken);
+    } else {
+      setShowTokenInput(true);
+    }
+  }, []);
+
+  const handleTokenSubmit = (token: string) => {
+    setMapboxToken(token);
+    setShowTokenInput(false);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="relative w-screen h-screen overflow-hidden bg-background">
+      {showTokenInput && <MapboxTokenInput onTokenSubmit={handleTokenSubmit} />}
+      
+      <div className="flex w-full h-full">
+        {/* Map section - 80% width */}
+        <div className="w-[80%] h-full">
+          <WorldMap mapboxToken={mapboxToken} />
+        </div>
+
+        {/* Rotating cards section - 20% width */}
+        <div className="w-[20%] h-full p-4 relative">
+          <RotatingCard />
+        </div>
       </div>
     </div>
   );
