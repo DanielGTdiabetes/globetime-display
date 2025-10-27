@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DISPLAY="${DISPLAY:-:0}"
+export XAUTHORITY="${XAUTHORITY:-${HOME:-/home/dani}/.Xauthority}"
+
+# Fondo negro para evitar flash blanco en el arranque.
+if command -v xsetroot >/dev/null 2>&1; then
+  DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" xsetroot -solid black >/dev/null 2>&1 || true
+fi
+
+# El navegador se lanza desde systemd (pantalla-kiosk-chromium@); no iniciar nada aquí.
+
+STATE_DIR=/var/lib/pantalla-reloj/state
+SESSION_FILE="${STATE_DIR}/session.env"
+LOG_DIR=/var/log/pantalla
+SESSION_LOG="${LOG_DIR}/session.env.log"
+
+mkdir -p "$LOG_DIR" >/dev/null 2>&1 || true
+install -d -m 0700 "$STATE_DIR" >/dev/null 2>&1 || true
+
+log_session() {
+  local message ts
+  ts="$(date -Is)"
+  message="$*"
+  printf '%s %s\n' "$ts" "$message" >>"$SESSION_LOG"
+}
+
+ensure_dbus() {
+  local runtime address
+  : "${XDG_RUNTIME_DIR:="/run/user/$(id -u)"}"
+  install -d -m 0700 "$XDG_RUNTIME_DIR" >/dev/null 2>&1 || true
+
+  if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+    if dbus-send --session --dest=org.freedesktop.DBus --type=method_call \
+        --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames >/dev/null 2>&1; then
+      log_session "dbus existing address=${DBUS_SESSION_BUS_ADDRESS}"
+      return
+    fi
+  fi
+
+  if [[ -S "$XDG_RUNTIME_DIR/bus" ]]; then
+    export DBUS_SESSION_BUS_ADDRESS="unix:path=${XDG_RUNTIME_DIR}/bus"
+    if dbus-send --session --dest=org.freedesktop.DBus --type=method_call \
+        --print-reply /org/freedesktop/DBus org.freedesktop.DBus.ListNames >/dev/null 2>&1; then
+      log_session "dbus socket-reused address=${DBUS_SESSION_BUS_ADDRESS}"
+      return
+    fi
+    rm -f "$XDG_RUNTIME_DIR/bus"
+  fi
+
+  if address=$(dbus-daemon --session --fork --print-address --address="unix:path=${XDG_RUNTIME_DIR}/bus" 2>/dev/null); then
+    export DBUS_SESSION_BUS_ADDRESS="$address"
+    log_session "dbus launched address=${DBUS_SESSION_BUS_ADDRESS}"
+  else
+    log_session "dbus launch-failed"
+  fi
+}
+
+write_session_state() {
+  {
+    echo "DISPLAY=${DISPLAY}"
+    echo "XAUTHORITY=${XAUTHORITY}"
+    echo "XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR}"
+    if [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]]; then
+      echo "DBUS_SESSION_BUS_ADDRESS=${DBUS_SESSION_BUS_ADDRESS}"
+    fi
+  } >"${SESSION_FILE}.tmp"
+  chmod 0640 "${SESSION_FILE}.tmp"
+  mv "${SESSION_FILE}.tmp" "$SESSION_FILE"
+  log_session "session-env-updated"
+}
+
+propagate_environment() {
+  if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    if dbus-update-activation-environment --systemd DISPLAY XAUTHORITY XDG_RUNTIME_DIR DBUS_SESSION_BUS_ADDRESS >/dev/null 2>&1; then
+      log_session "dbus-update-activation=ok"
+    else
+      log_session "dbus-update-activation=failed"
+    fi
+  else
+    log_session "dbus-update-activation=missing"
+  fi
+}
+
+ensure_dbus
+propagate_environment
+write_session_state
+
+log_session "xset-hook-start"
+if command -v xset >/dev/null 2>&1; then
+  if DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" xset -dpms >/dev/null 2>&1; then
+    log_session "xset-dpms-off"
+  else
+    log_session "xset-dpms-error"
+  fi
+  if DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" xset s off >/dev/null 2>&1; then
+    log_session "xset-s-off"
+  else
+    log_session "xset-s-off-error"
+  fi
+  if DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" xset s noblank >/dev/null 2>&1; then
+    log_session "xset-s-noblank"
+  else
+    log_session "xset-s-noblank-error"
+  fi
+else
+  log_session "xset-missing"
+fi
+
+if command -v unclutter >/dev/null 2>&1; then
+  DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" \
+    unclutter -idle 0 -root -noevents -grab >/dev/null 2>&1 &
+  log_session "unclutter-started"
+else
+  log_session "unclutter-missing"
+fi
+
+log_session "xset-hook-finished"
+
+sleep 0.5 2>/dev/null || sleep 1
