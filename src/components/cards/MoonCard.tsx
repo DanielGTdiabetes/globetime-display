@@ -3,10 +3,10 @@ import { Moon } from 'lucide-react';
 const MoonCard = () => {
   // Placeholder data - en producción calcularía la fase lunar real
   const moonPhases = [
-    { phase: 'Luna Nueva', emoji: '🌑', date: '1 Nov' },
-    { phase: 'Cuarto Creciente', emoji: '🌓', date: '9 Nov' },
-    { phase: 'Luna Llena', emoji: '🌕', date: '15 Nov' },
-    { phase: 'Cuarto Menguante', emoji: '🌗', date: '23 Nov' }
+    { phase: 'Luna Nueva', icon: '/icons/moon/moon-0.svg', date: '1 Nov', percentage: 0 },
+    { phase: 'Cuarto Creciente', icon: '/icons/moon/moon-25.svg', date: '9 Nov', percentage: 25 },
+    { phase: 'Luna Llena', icon: '/icons/moon/moon-100.svg', date: '15 Nov', percentage: 100 },
+    { phase: 'Cuarto Menguante', icon: '/icons/moon/moon-75.svg', date: '23 Nov', percentage: 75 }
   ];
 
   const currentPhase = moonPhases[2]; // Luna Llena como ejemplo
@@ -19,7 +19,12 @@ const MoonCard = () => {
       </div>
 
       <div className="text-center space-y-4">
-        <div className="text-7xl">{currentPhase.emoji}</div>
+        <img 
+          src={currentPhase.icon} 
+          alt={currentPhase.phase}
+          className="w-24 h-24 mx-auto icon-lg filter drop-shadow-lg"
+          style={{ filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.5))' }}
+        />
         <div>
           <div className="text-2xl font-bold text-primary">{currentPhase.phase}</div>
           <div className="text-sm text-muted-foreground">{currentPhase.date}</div>
@@ -40,7 +45,11 @@ const MoonCard = () => {
                   : 'bg-muted/20'
               }`}
             >
-              <div className="text-2xl mb-1">{phase.emoji}</div>
+              <img 
+                src={phase.icon} 
+                alt={phase.phase}
+                className="w-8 h-8 mx-auto mb-1 icon"
+              />
               <div className="text-xs text-muted-foreground">{phase.date}</div>
             </div>
           ))}

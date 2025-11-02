@@ -54,4 +54,21 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Icon utility classes */
+  .icon {
+    width: 24px;
+    height: 24px;
+    @apply transition-transform;
+  }
+
+  .icon-lg {
+    width: 64px;
+    height: 64px;
+  }
+
+  img.icon, img.icon-lg {
+    height: auto;
+    object-fit: contain;
+  }
 }

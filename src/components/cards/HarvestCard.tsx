@@ -5,16 +5,16 @@ const HarvestCard = () => {
   const monthlyHarvest = {
     month: 'Octubre',
     vegetables: [
-      { name: 'Calabazas', emoji: '🎃' },
-      { name: 'Remolachas', emoji: '🥕' },
-      { name: 'Acelgas', emoji: '🥬' },
-      { name: 'Brócoli', emoji: '🥦' }
+      { name: 'Calabazas', icon: '/icons/harvest/pumpkin.svg' },
+      { name: 'Remolachas', icon: '/icons/harvest/beet.svg' },
+      { name: 'Acelgas', icon: '/icons/harvest/chard.svg' },
+      { name: 'Brócoli', icon: '/icons/harvest/broccoli.svg' }
     ],
     fruits: [
-      { name: 'Manzanas', emoji: '🍎' },
-      { name: 'Peras', emoji: '🍐' },
-      { name: 'Uvas', emoji: '🍇' },
-      { name: 'Granadas', emoji: '🍒' }
+      { name: 'Manzanas', icon: '/icons/harvest/apple.svg' },
+      { name: 'Peras', icon: '/icons/harvest/pear.svg' },
+      { name: 'Uvas', icon: '/icons/harvest/grapes.svg' },
+      { name: 'Granadas', icon: '/icons/harvest/cherry.svg' }
     ]
   };
 
@@ -32,9 +32,13 @@ const HarvestCard = () => {
             {monthlyHarvest.vegetables.map((item, index) => (
               <div 
                 key={index}
-                className="flex items-center space-x-2 bg-muted/20 rounded-lg p-3 border border-border/50"
+                className="flex items-center space-x-3 bg-muted/20 rounded-lg p-3 border border-border/50 hover:bg-muted/30 transition-colors"
               >
-                <span className="text-2xl">{item.emoji}</span>
+                <img 
+                  src={item.icon} 
+                  alt={item.name}
+                  className="w-10 h-10 icon"
+                />
                 <span className="text-sm font-medium">{item.name}</span>
               </div>
             ))}
@@ -47,9 +51,13 @@ const HarvestCard = () => {
             {monthlyHarvest.fruits.map((item, index) => (
               <div 
                 key={index}
-                className="flex items-center space-x-2 bg-muted/20 rounded-lg p-3 border border-border/50"
+                className="flex items-center space-x-3 bg-muted/20 rounded-lg p-3 border border-border/50 hover:bg-muted/30 transition-colors"
               >
-                <span className="text-2xl">{item.emoji}</span>
+                <img 
+                  src={item.icon} 
+                  alt={item.name}
+                  className="w-10 h-10 icon"
+                />
                 <span className="text-sm font-medium">{item.name}</span>
               </div>
             ))}
